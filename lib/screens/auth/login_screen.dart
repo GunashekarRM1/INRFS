@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../models/user_model.dart';
 import '../../routes/app_routes.dart';
+import '../dashboard/investor_dashboard.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -10,17 +13,15 @@ class LoginScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 🔹 Background image
           Image.asset(
             'assets/images/share1.jpg',
             fit: BoxFit.cover,
           ),
 
-          // 🔹 Dark overlay for readability
-          Container(color: Colors.black.withValues(alpha: 0.4)),
+          Container(
+            color: Colors.black.withValues(alpha: 0.4),
+          ),
 
-
-          // 🔹 Login Card
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -41,7 +42,6 @@ class LoginScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 🔹 Icon
                     CircleAvatar(
                       radius: 32,
                       backgroundColor: Colors.blue.shade100,
@@ -54,7 +54,6 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Title
                     const Text(
                       'Investor Login',
                       style: TextStyle(
@@ -71,11 +70,9 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // 🔹 Email / Customer ID
                     TextField(
                       decoration: InputDecoration(
                         labelText: 'Email or Customer ID',
-                        hintText: 'john.doe@example.com or I1234',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -84,7 +81,6 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Password
                     TextField(
                       obscureText: true,
                       decoration: InputDecoration(
@@ -95,38 +91,25 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
-
-                    // 🔹 Remember + Forgot
-                    Row(
-                      children: [
-                        Checkbox(value: false, onChanged: (_) {}),
-                        const Text('Remember me'),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text('Forgot password?'),
-                        ),
-                      ],
-                    ),
-
                     const SizedBox(height: 16),
 
-                    // 🔹 Login Button
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
                         onPressed: () {
-                          Navigator.pushReplacementNamed(
+                          final user = UserModel(
+                            name: 'John Doe',
+                            email: 'john.doe@example.com',
+                            mobile: '9876543210',
+                            customerId: 'I1234',
+                          );
+
+                          Navigator.pushReplacement(
                             context,
-                            AppRoutes.investorDashboard,
+                            MaterialPageRoute(
+                              builder: (_) => InvestorDashboard(user: user),
+                            ),
                           );
                         },
                         child: const Text(
@@ -138,7 +121,6 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Register
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
