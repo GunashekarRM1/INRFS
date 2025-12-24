@@ -9,6 +9,8 @@ class BondModel {
   final String ipoDate;
   final List<String> pros;
   final List<String> cons;
+  final String about;
+
 
   BondModel({
     required this.name,
@@ -21,5 +23,6 @@ class BondModel {
     required this.ipoDate,
     required this.pros,
     required this.cons,
+    required this.about,
   });
 }
