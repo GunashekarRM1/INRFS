@@ -64,13 +64,25 @@ class InvestmentsScreen extends StatelessWidget {
               // Withdraw Button (Active only)
               if (i.isActive) ...[
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _openDetails(context, i),
-                    child: const Text('Withdraw'),
-                  ),
-                ),
+               Center(
+  child: SizedBox(
+    width: 140, // 👈 control button width here
+    height: 40,
+    child: ElevatedButton(
+      onPressed: () => _openDetails(context, i),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        textStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      child: const Text('Withdraw'),
+    ),
+  ),
+),
+
+    
               ],
             ],
           ),
