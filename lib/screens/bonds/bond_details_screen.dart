@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/bond_model.dart';
+import '../../widgets/risk_meter.dart';
+import '../../widgets/yield_chart.dart';
+import '../../widgets/pdf_button.dart';
 
 class BondDetailsScreen extends StatelessWidget {
   final BondModel bond;
@@ -26,19 +29,35 @@ class BondDetailsScreen extends StatelessWidget {
             _row("Tenure", "${bond.tenure} years"),
             _row("IPO Date", bond.ipoDate),
           ]),
-
           _section(
             "Pros",
             bond.pros.map((e) => _bullet(e, Colors.green)).toList(),
           ),
-
           _section(
             "Cons",
             bond.cons.map((e) => _bullet(e, Colors.red)).toList(),
           ),
-
+          _section(
+            "Risk Analysis",
+            [
+              RiskMeter(rating: bond.rating),
+            ],
+          ),
+          _section(
+            "Yield Forecast",
+            [
+              YieldChart(interest: bond.interest),
+            ],
+          ),
+          _section(
+            "Documents",
+            [
+              PdfButton(
+                pdfUrl: "https://www.example.com/bond_prospectus.pdf",
+              ),
+            ],
+          ),
           const SizedBox(height: 20),
-
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
