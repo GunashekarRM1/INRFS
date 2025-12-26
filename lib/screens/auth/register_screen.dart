@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../routes/app_routes.dart';
+import '../../services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -10,6 +11,25 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   bool agree = false;
+  bool loading = false;
+
+  final TextEditingController firstNameCtrl = TextEditingController();
+  final TextEditingController lastNameCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController mobileCtrl = TextEditingController();
+  final TextEditingController passwordCtrl = TextEditingController();
+  final TextEditingController confirmPasswordCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    firstNameCtrl.dispose();
+    lastNameCtrl.dispose();
+    emailCtrl.dispose();
+    mobileCtrl.dispose();
+    passwordCtrl.dispose();
+    confirmPasswordCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,17 +37,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // 🔹 Background image
           Image.asset(
             'assets/images/share1.jpg',
             fit: BoxFit.cover,
           ),
-
-          // 🔹 Dark overlay
-          Container(color: Colors.black.withValues(alpha: 0.4)),
-
-
-          // 🔹 Registration Card
+          Container(color: Colors.black.withOpacity(0.4)),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -46,9 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 🔹 Title
                     const Text(
                       'Create Your Account',
                       style: TextStyle(
@@ -56,20 +68,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
-                    // 🔹 First & Last Name
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
+                            controller: firstNameCtrl,
                             decoration: _inputStyle('First Name'),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
+                            controller: lastNameCtrl,
                             decoration: _inputStyle('Last Name'),
                           ),
                         ),
@@ -78,8 +90,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Email
                     TextField(
+                      controller: emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: _inputStyle(
                         'Email Address',
                         hint: 'john.doe@example.com',
@@ -88,36 +101,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Mobile
                     TextField(
+                      controller: mobileCtrl,
                       keyboardType: TextInputType.phone,
                       decoration: _inputStyle(
                         'Mobile Number',
-                        hint: '+91 98765 43210',
+                        hint: '9876543210',
                       ),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Password
                     TextField(
+                      controller: passwordCtrl,
                       obscureText: true,
                       decoration: _inputStyle('Password'),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Confirm Password
                     TextField(
+                      controller: confirmPasswordCtrl,
                       obscureText: true,
                       decoration: _inputStyle('Confirm Password'),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Terms checkbox
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Checkbox(
                           value: agree,
@@ -126,12 +137,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                         const Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 12),
-                            child: Text(
-                              'I agree to the Terms & Conditions and Privacy Policy',
-                              style: TextStyle(fontSize: 13),
-                            ),
+                          child: Text(
+                            'I agree to the Terms & Conditions and Privacy Policy',
+                            style: TextStyle(fontSize: 13),
                           ),
                         ),
                       ],
@@ -139,43 +147,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 20),
 
-                    // 🔹 Register button
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
+                        onPressed: agree && !loading ? _register : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        onPressed: agree
-                            ? () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.otp,
-                                );
-                              }
-                            : null,
-                        child: const Text(
-                          'Register & Verify',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        child: loading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                'Register & Verify',
+                                style: TextStyle(fontSize: 16),
+                              ),
                       ),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // 🔹 Login link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text('Already have an account? '),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
+                          onTap: () => Navigator.pop(context),
                           child: const Text(
                             'Login here',
                             style: TextStyle(
@@ -193,6 +194,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _register() async {
+    if (passwordCtrl.text != confirmPasswordCtrl.text) {
+      _showSnack('Passwords do not match');
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      final res = await ApiService.registerUser(
+        firstName: firstNameCtrl.text.trim(),
+        lastName: lastNameCtrl.text.trim(),
+        email: emailCtrl.text.trim(),
+        mobile: mobileCtrl.text.trim(),
+        password: passwordCtrl.text.trim(),
+      );
+
+      _showSnack(res['message'] ?? 'Registration successful');
+      Navigator.pushNamed(context, AppRoutes.otp);
+    } catch (e) {
+      _showSnack(e.toString());
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
     );
   }
 
