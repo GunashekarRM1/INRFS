@@ -2,10 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../../models/user_model.dart';
 import '../../routes/app_routes.dart';
+import '../../services/auth_service.dart';
 import '../dashboard/investor_dashboard.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController identifierCtrl = TextEditingController();
+  final TextEditingController passwordCtrl = TextEditingController();
+
+  bool loading = false;
+
+  @override
+  void dispose() {
+    identifierCtrl.dispose();
+    passwordCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,14 +31,14 @@ class LoginScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // 🔹 Background Image
           Image.asset(
             'assets/images/share1.jpg',
             fit: BoxFit.cover,
           ),
 
-          Container(
-            color: Colors.black.withValues(alpha: 0.4),
-          ),
+          // 🔹 Dark Overlay
+          Container(color: Colors.black.withOpacity(0.4)),
 
           Center(
             child: SingleChildScrollView(
@@ -70,9 +88,11 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
+                    // 🔹 Email OR Investor ID
                     TextField(
+                      controller: identifierCtrl,
                       decoration: InputDecoration(
-                        labelText: 'Email or Customer ID',
+                        labelText: 'Email or Investor Registration ID',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -81,7 +101,9 @@ class LoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
+                    // 🔹 Password
                     TextField(
+                      controller: passwordCtrl,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: 'Password',
@@ -91,36 +113,28 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
+                    // 🔹 Login Button
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final user = UserModel(
-                            name: 'John Doe',
-                            email: 'john.doe@example.com',
-                            mobile: '9876543210',
-                            customerId: 'I1234',
-                          );
-
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => InvestorDashboard(user: user),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        onPressed: loading ? null : _login,
+                        child: loading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                'Login',
+                                style: TextStyle(fontSize: 16),
+                              ),
                       ),
                     ),
 
                     const SizedBox(height: 16),
 
+                    // 🔹 Register Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -149,6 +163,51 @@ class LoginScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // 🔹 LOGIN API CALL
+  Future<void> _login() async {
+    final identifier = identifierCtrl.text.trim();
+    final password = passwordCtrl.text.trim();
+
+    if (identifier.isEmpty || password.isEmpty) {
+      _showSnack('Please enter all fields');
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      final res = await AuthService.loginUser(
+        identifier: identifier,
+        password: password,
+      );
+
+      // Adjust keys if backend response differs
+      final user = UserModel(
+        name: res['name'] ?? '',
+        email: res['email'] ?? '',
+        mobile: res['mobile'] ?? '',
+        customerId: res['inv_reg_id'] ?? '',
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InvestorDashboard(user: user),
+        ),
+      );
+    } catch (e) {
+      _showSnack(e.toString());
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
     );
   }
 }
