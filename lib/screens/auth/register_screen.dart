@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../routes/app_routes.dart';
 import '../../services/api_service.dart';
+import '../auth/otp_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -31,6 +31,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  /* ---------------- REGISTER ---------------- */
+
+  Future<void> _register() async {
+    if (passwordCtrl.text != confirmPasswordCtrl.text) {
+      _showSnack('Passwords do not match');
+      return;
+    }
+
+    if (!agree) {
+      _showSnack('Please accept Terms & Conditions');
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      final res = await ApiService.registerUser(
+        firstName: firstNameCtrl.text.trim(),
+        lastName: lastNameCtrl.text.trim(),
+        email: emailCtrl.text.trim(),
+        mobile: mobileCtrl.text.trim(),
+        password: passwordCtrl.text.trim(),
+      );
+
+      _showSnack(res['message'] ?? 'OTP sent to your email');
+
+      // 👉 NAVIGATE TO OTP SCREEN WITH EMAIL
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OTPVerificationScreen(
+            email: emailCtrl.text.trim(),
+          ),
+        ),
+      );
+    } catch (e) {
+      _showSnack(e.toString());
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  /* ---------------- UI ---------------- */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +87,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'assets/images/share1.jpg',
             fit: BoxFit.cover,
           ),
-          Container(color: Colors.black.withOpacity(0.4)),
+          Container(color:Colors.black.withValues(alpha: 0.4)
+),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -195,32 +242,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _register() async {
-    if (passwordCtrl.text != confirmPasswordCtrl.text) {
-      _showSnack('Passwords do not match');
-      return;
-    }
-
-    setState(() => loading = true);
-
-    try {
-      final res = await ApiService.registerUser(
-        firstName: firstNameCtrl.text.trim(),
-        lastName: lastNameCtrl.text.trim(),
-        email: emailCtrl.text.trim(),
-        mobile: mobileCtrl.text.trim(),
-        password: passwordCtrl.text.trim(),
-      );
-
-      _showSnack(res['message'] ?? 'Registration successful');
-      Navigator.pushNamed(context, AppRoutes.otp);
-    } catch (e) {
-      _showSnack(e.toString());
-    } finally {
-      setState(() => loading = false);
-    }
   }
 
   void _showSnack(String msg) {

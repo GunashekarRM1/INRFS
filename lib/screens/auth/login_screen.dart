@@ -38,7 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
 
           // 🔹 Dark Overlay
-          Container(color: Colors.black.withOpacity(0.4)),
+          Container(color: Colors.black.withValues(alpha: 0.4)
+),
 
           Center(
             child: SingleChildScrollView(
@@ -183,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
         identifier: identifier,
         password: password,
       );
-
+ if (!mounted) return; 
       // Adjust keys if backend response differs
       final user = UserModel(
         name: res['name'] ?? '',
