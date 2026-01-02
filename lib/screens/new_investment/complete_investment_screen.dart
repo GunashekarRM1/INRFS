@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import '../bonds/bonds_screen.dart';
-
 
 class CompleteInvestmentScreen extends StatefulWidget {
   final String planName;
@@ -30,31 +29,6 @@ class _CompleteInvestmentScreenState
   bool agreed = false;
 
   // =========================
-  // PAYMENT SUCCESS HANDLER
-  // =========================
- void _handlePaymentSuccess() {
-  Navigator.pop(context); // close payment popup
-
-  BondsStore.addBond(
-    BondModel(
-      bondId: 'INV-${DateTime.now().millisecondsSinceEpoch}',
-      planName: widget.planName,
-      investedAmount: investmentAmount,
-      maturityValue: totalMaturity,
-      tenure: '${widget.interestRate}% p.a.',
-      interest: '${widget.interestRate}%',
-      status: 'Active',
-      date: 'Dec 30, 2025',
-    ),
-  );
-
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (_) => const BondsScreen()),
-  );
-}
-
-  // =========================
   // CALCULATE RETURNS
   // =========================
   void _calculate() {
@@ -77,8 +51,8 @@ class _CompleteInvestmentScreenState
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Terms & Conditions'),
-        content: SingleChildScrollView(
-          child: const Text(
+        content: const SingleChildScrollView(
+          child: Text(
             '1. Investment is locked for the selected tenure period.\n'
             '2. Returns are calculated based on the fixed interest rate.\n'
             '3. Digital bond will be issued immediately after payment confirmation.\n'
@@ -283,22 +257,114 @@ void _startPaymentProcess() {
 
                   const SizedBox(height: 12),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+  // =========================
+  // PAYMENT MODAL (GLASS UI)
+  // =========================
+  void _showPaymentSheet() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (_) {
+        return Center(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              constraints: const BoxConstraints(maxWidth: 380),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Complete Payment',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 20),
+
+                    _paymentRow('Plan Type', widget.planName),
+                    _paymentRow(
+                      'Amount to Pay',
+                      '₹${investmentAmount.toStringAsFixed(0)}',
+                      bold: true,
+                    ),
+                    _paymentRow(
+                      'Expected Returns',
+                      '₹${expectedReturns.toStringAsFixed(0)}',
+                      valueColor: Colors.green,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    _paymentButton(
+                      icon: Icons.credit_card,
+                      text: 'Pay with Stripe',
+                    ),
+                    _paymentButton(
+                      icon: Icons.account_balance_wallet,
+                      text: 'Pay with PayPal',
+                    ),
+                    _paymentButton(
+                      icon: Icons.account_balance,
+                      text: 'Bank Transfer',
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  // =========================
+  // PROCESS PAYMENT (FAKE)
+  // =========================
+  void _processPayment() {
+    Navigator.pop(context); // close payment modal
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+
+      Navigator.pop(context); // close loader
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const BondsScreen(),
         ),
       );
-    },
-  );
-}
+    });
+  }
 
   // =========================
   // UI
@@ -347,7 +413,6 @@ void _startPaymentProcess() {
 
             const SizedBox(height: 24),
 
-            // AMOUNT INPUT
             const Text(
               'Investment Amount',
               style: TextStyle(fontWeight: FontWeight.w600),
@@ -366,7 +431,6 @@ void _startPaymentProcess() {
 
             const SizedBox(height: 20),
 
-            // CALCULATED RETURNS
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -406,7 +470,6 @@ void _startPaymentProcess() {
 
             const SizedBox(height: 32),
 
-            // SUMMARY
             const Text(
               'Investment Summary',
               style:
@@ -440,7 +503,6 @@ void _startPaymentProcess() {
 
             const SizedBox(height: 24),
 
-            // TERMS
             TextButton(
               onPressed: () => _showTermsDialog(context),
               child: const Text(
@@ -462,7 +524,6 @@ void _startPaymentProcess() {
 
             const SizedBox(height: 24),
 
-            // ACTIONS
             Row(
               children: [
                 Expanded(
@@ -514,7 +575,7 @@ void _startPaymentProcess() {
     );
   }
 
-  Widget _paymentInfoRow(
+  Widget _paymentRow(
     String label,
     String value, {
     bool bold = false,
@@ -541,25 +602,15 @@ void _startPaymentProcess() {
   Widget _paymentButton({
     required IconData icon,
     required String text,
-    required VoidCallback onTap,
-    bool highlight = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            backgroundColor:
-                highlight ? Colors.blue.shade50 : Colors.white,
-            side: BorderSide(
-              color: highlight ? Colors.blue : Colors.grey.shade300,
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          onPressed: onTap,
-          icon: Icon(icon, size: 20),
+          icon: Icon(icon),
           label: Text(text),
+          onPressed: _processPayment,
         ),
       ),
     );
