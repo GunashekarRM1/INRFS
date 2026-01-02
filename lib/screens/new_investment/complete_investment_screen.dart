@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../bonds/bonds_screen.dart';
+import '../../models/bond_model.dart';
+import '../bonds/bonds_data.dart';
+
 
 class CompleteInvestmentScreen extends StatefulWidget {
   final String planName;
@@ -157,30 +160,45 @@ class _CompleteInvestmentScreenState
   // =========================
   // PROCESS PAYMENT (FAKE)
   // =========================
-  void _processPayment() {
-    Navigator.pop(context); // close payment modal
+ void _processPayment() {
+  Navigator.pop(context); // close payment modal
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(),
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+
+  Future.delayed(const Duration(seconds: 2), () {
+    if (!mounted) return;
+
+    Navigator.pop(context); // close loader
+
+    // ✅ ADD BOND TO LIST
+    bondsList.insert(
+      0,
+      BondModel(
+        bondId: 'INV-${DateTime.now().millisecondsSinceEpoch}',
+        planName: widget.planName,
+        investedAmount: investmentAmount,
+        maturityValue: totalMaturity,
+        tenure: '${(widget.interestRate == 18 ? 6 : 3)} Months',
+        interest: '${widget.interestRate}% p.a.',
+        status: 'Active',
+        date: DateTime.now().toString().split(' ').first,
       ),
     );
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-
-      Navigator.pop(context); // close loader
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const BondsScreen(),
-        ),
-      );
-    });
-  }
+    // ✅ NAVIGATE TO BONDS
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const BondsScreen()),
+      (route) => false,
+    );
+  });
+}
 
   // =========================
   // UI
