@@ -39,9 +39,10 @@ class _LoginScreenState extends State<LoginScreen> {
             fit: BoxFit.cover,
           ),
 
-          // 🔹 Dark Overlay
-          Container(color: Colors.black.withValues(alpha: 0.4)
-),
+          // 🔹 Dark overlay
+          Container(
+            color: Colors.black.withValues(alpha: 0.45),
+          ),
 
           Center(
             child: SingleChildScrollView(
@@ -223,8 +224,9 @@ class _LoginScreenState extends State<LoginScreen> {
         identifier: identifier,
         password: password,
       );
- if (!mounted) return; 
-      // Adjust keys if backend response differs
+
+      if (!mounted) return;
+
       final user = UserModel(
         name: res['name'] ?? '',
         email: res['email'] ?? '',
@@ -239,26 +241,10 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e) {
-  if (!mounted) return;
-
-  final msg = e.toString();
-
-  if (msg.contains('OTP verification required')) {
-    _showSnack('Please verify OTP to continue');
-
-    Navigator.pushNamed(
-      context,
-      AppRoutes.otp,
-      arguments: {
-        'email': identifierCtrl.text.trim(),
-      },
-    );
-  } else {
-    _showSnack('Login failed. Please check your credentials.');
-  }
-}
-
-     finally {
+      if (mounted) {
+        _showSnack(e.toString());
+      }
+    } finally {
       if (mounted) {
         setState(() => loading = false);
       }
